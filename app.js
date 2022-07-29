@@ -1,6 +1,6 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const session = require('express-session');
+const mongoose = require('mongoose');
 var passport = require('passport');
 var crypto = require('crypto');
 var routes = require('./routes');
@@ -23,7 +23,9 @@ require('dotenv').config();
 var app = express();
 
 app.use(express.json());
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({
+  extended: true
+}));
 
 
 /**
@@ -31,6 +33,20 @@ app.use(express.urlencoded({extended: true}));
  */
 
 // TODO
+const sessionStore = new MongoStore({
+  mongooseConnection: connection,
+  collection: 'sessions'
+})
+
+app.use(session({
+  secret: process.env.SECRET,
+  resave: false,
+  saveUninitialized: true,
+  store: sessionStore,
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24 // 1 Day
+  }
+}));
 
 /**
  * -------------- PASSPORT AUTHENTICATION ----------------
@@ -38,6 +54,11 @@ app.use(express.urlencoded({extended: true}));
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+app.use((req, res, next) => {
+  console.log(req.session, req.user);
+  next();
+})
 
 
 /**
@@ -53,4 +74,6 @@ app.use(routes);
  */
 
 // Server listens on http://localhost:3000
-app.listen(3000);
+app.listen(3000, () => {
+  console.log('listening on port 3000')
+});
